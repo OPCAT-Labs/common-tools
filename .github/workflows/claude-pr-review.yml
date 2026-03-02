@@ -96,7 +96,6 @@ jobs:
 
       - name: Review with Claude Code CLI
         id: claude-review
-        continue-on-error: true
         env:
           ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
@@ -302,9 +301,8 @@ jobs:
           # Use Claude Code CLI in non-interactive mode with --print flag
           if ! claude --print < prompt.txt > review.md 2>claude_error.log; then
             echo "::error::Claude Code CLI failed"
-            if [[ -f claude_error.log ]]; then
-              echo "Error log:"
-              cat claude_error.log
+            if [[ -s review.md ]] && grep -Eq '(^|[^0-9])402([^0-9]|$)|insufficient( |_)?balance|billing' review.md; then
+              echo "::error::Detected probable billing issue (API 402 / insufficient balance). Please verify Anthropic account credits and billing status."
             fi
             exit 1
           fi
