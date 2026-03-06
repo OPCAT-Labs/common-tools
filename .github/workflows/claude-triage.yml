@@ -20,6 +20,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ensure triage labels exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING_LABELS=$(gh label list \
+            --repo "${{ github.repository }}" \
+            --limit 1000 \
+            --json name \
+            --jq '.[].name')
+
+          ensure_label() {
+            local name="$1"
+            local color="$2"
+            local description="$3"
+
+            if echo "$EXISTING_LABELS" | grep -Fxq "$name"; then
+              echo "Label already exists: $name"
+              return 0
+            fi
+
+            gh label create "$name" \
+              --repo "${{ github.repository }}" \
+              --color "$color" \
+              --description "$description"
+          }
+
+          ensure_label "priority:critical" "B60205" "Critical priority"
+          ensure_label "priority:high" "D93F0B" "High priority"
+          ensure_label "priority:medium" "E4E669" "Medium priority"
+          ensure_label "priority:low" "0E8A16" "Low priority"
+          ensure_label "claude-fixable" "1D76DB" "Clear bug that Claude can auto-fix"
+
       - name: Determine assignee
         id: assignee
         env:
