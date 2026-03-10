@@ -16,9 +16,22 @@ permissions:
 
 jobs:
   claude:
-    # Security gating (author_association check) is done by the caller workflow's
-    # `if` condition. Do NOT duplicate it here — in a reusable workflow context,
-    # github.event_name is 'workflow_call', so event-specific checks always fail.
+    # Restrict to org members, owners, and explicitly granted collaborators
+    # to prevent untrusted users from triggering a write-capable agent.
+    if: |
+      (github.event_name == 'issue_comment' &&
+        contains(github.event.comment.body, '@claude') &&
+        contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' &&
+        contains(github.event.comment.body, '@claude') &&
+        contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)) ||
+      (github.event_name == 'issues' &&
+        contains(github.event.issue.body, '@claude') &&
+        contains('OWNER,MEMBER,COLLABORATOR', github.event.issue.author_association)) ||
+      (github.event_name == 'issues' &&
+        github.event.action == 'assigned' &&
+        contains(github.event.issue.body, '@claude') &&
+        contains('OWNER,MEMBER,COLLABORATOR', github.event.issue.author_association))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
