@@ -81,7 +81,14 @@ jobs:
           REVIEW: ${{ needs.review.outputs.review }}
         with:
           script: |
-            const body = `<!-- codex-review -->\n## Codex Code Review\n\n${process.env.REVIEW}`;
+            // Unescape literal \n sequences that codex-action emits in step outputs
+            let review = process.env.REVIEW || '';
+            // Strip wrapping quotes if the output is JSON-stringified
+            if (review.startsWith('"') && review.endsWith('"')) {
+              try { review = JSON.parse(review); } catch(e) {}
+            }
+            review = review.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+            const body = `<!-- codex-review -->\n## Codex Code Review\n\n${review}`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
