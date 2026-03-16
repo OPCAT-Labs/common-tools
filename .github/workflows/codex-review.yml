@@ -21,31 +21,30 @@ jobs:
     outputs:
       review: ${{ steps.codex.outputs.final-message }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
-
-      - name: Fetch PR refs
-        run: |
-          git fetch --no-tags origin \
-            ${{ github.event.pull_request.base.ref }} \
-            +refs/pull/${{ github.event.pull_request.number }}/head
-
-      - name: Write review prompt
+      - name: Fetch PR diff and write review prompt
         env:
+          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
         run: |
+          # Fetch diff via gh API — no git sandbox restrictions
+          gh pr diff "$PR_NUMBER" --repo "$REPO" > /tmp/pr.diff 2>/dev/null || true
+
           cat > /tmp/review-prompt.md << 'EOF'
           You are a senior code reviewer. Review only the diff introduced in this PR.
+          The full diff is included below — do NOT attempt to run git or shell commands.
           EOF
-          printf "PR number: %s\nPR title: %s\nPR description:\n%s\n" \
+
+          printf "PR number: %s\nPR title: %s\nPR description:\n%s\n\n" \
             "$PR_NUMBER" "$PR_TITLE" "$PR_BODY" >> /tmp/review-prompt.md
-          printf "\nDiff command to inspect changes:\n  git diff %s...%s\n" \
-            "$BASE_SHA" "$HEAD_SHA" >> /tmp/review-prompt.md
+
+          echo "## Diff" >> /tmp/review-prompt.md
+          echo '```diff' >> /tmp/review-prompt.md
+          cat /tmp/pr.diff >> /tmp/review-prompt.md
+          echo '```' >> /tmp/review-prompt.md
+
           cat >> /tmp/review-prompt.md << 'EOF'
 
           Check for:
