@@ -3,6 +3,13 @@ name: Auto Fix CI Failures
 on:
   workflow_call:
     inputs:
+      max_turns:
+        description: >
+          Maximum number of turns for Claude to attempt the fix.
+          Increase if Claude is hitting the turn limit on complex fixes.
+        type: number
+        required: false
+        default: 50
       allowed_tools:
         description: >
           Comma-separated list of tools Claude is allowed to use.
@@ -26,7 +33,7 @@ permissions:
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,5 +109,5 @@ jobs:
             3. Commit and push the fixes directly to the current branch (${{ github.event.workflow_run.head_branch }}).
             4. Do NOT create a new PR. The fixes should be pushed to the existing branch.
           claude_args: >
-            --max-turns 30
+            --max-turns ${{ inputs.max_turns }}
             --allowedTools '${{ inputs.allowed_tools }}'
