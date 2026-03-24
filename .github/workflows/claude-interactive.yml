@@ -47,4 +47,4 @@ jobs:
           trigger_phrase: "@claude"
           claude_args: >
             --max-turns 30
-            --allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(npm:*),Bash(yarn:*),Bash(npx:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh issue comment:*)'
+            --allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(npm:*),Bash(yarn:*),Bash(npx:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh issue comment:*)'
