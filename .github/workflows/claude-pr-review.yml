@@ -297,6 +297,11 @@ jobs:
           # Use Claude Code CLI in non-interactive mode with --print flag
           if ! claude --print < prompt.txt > review.md 2>claude_error.log; then
             echo "::error::Claude Code CLI failed"
+            echo "--- claude stderr ---"
+            cat claude_error.log || true
+            echo "--- claude stdout (review.md) ---"
+            cat review.md || true
+            echo "---"
             if [[ -s review.md ]] && grep -Eq '(^|[^0-9])402([^0-9]|$)|insufficient( |_)?balance|billing' review.md; then
               echo "::error::Detected probable billing issue (API 402 / insufficient balance). Please verify Anthropic account credits and billing status."
             fi
